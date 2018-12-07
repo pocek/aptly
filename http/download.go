@@ -126,7 +126,7 @@ func (downloader *downloaderImpl) DownloadWithChecksum(ctx context.Context, url 
 	expected *utils.ChecksumInfo, ignoreMismatch bool, maxTries int) error {
 
 	if downloader.progress != nil {
-		downloader.progress.Printf("Downloading %s...\n", url)
+		downloader.progress.PrintfStdErr("Downloading %s...\n", url)
 	}
 	req, err := downloader.newRequest(ctx, "GET", url)
 

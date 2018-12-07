@@ -53,14 +53,14 @@ func aptlyMirrorUpdate(cmd *commander.Command, args []string) error {
 		return fmt.Errorf("unable to update: %s", err)
 	}
 
-	context.Progress().Printf("Downloading & parsing package files...\n")
+	context.Progress().PrintfStdErr("Downloading & parsing package files...\n")
 	err = repo.DownloadPackageIndexes(context.Progress(), context.Downloader(), verifier, context.CollectionFactory(), ignoreMismatch, maxTries)
 	if err != nil {
 		return fmt.Errorf("unable to update: %s", err)
 	}
 
 	if repo.Filter != "" {
-		context.Progress().Printf("Applying filter...\n")
+		context.Progress().PrintfStdErr("Applying filter...\n")
 		var filterQuery deb.PackageQuery
 
 		filterQuery, err = query.Parse(repo.Filter)
@@ -73,7 +73,7 @@ func aptlyMirrorUpdate(cmd *commander.Command, args []string) error {
 		if err != nil {
 			return fmt.Errorf("unable to update: %s", err)
 		}
-		context.Progress().Printf("Packages filtered: %d -> %d.\n", oldLen, newLen)
+		context.Progress().PrintfStdErr("Packages filtered: %d -> %d.\n", oldLen, newLen)
 	}
 
 	var (
@@ -83,7 +83,7 @@ func aptlyMirrorUpdate(cmd *commander.Command, args []string) error {
 
 	skipExistingPackages := context.Flags().Lookup("skip-existing-packages").Value.Get().(bool)
 
-	context.Progress().Printf("Building download queue...\n")
+	context.Progress().PrintfStdErr("Building download queue...\n")
 	queue, downloadSize, err = repo.BuildDownloadQueue(context.PackagePool(), context.CollectionFactory().PackageCollection(),
 		context.CollectionFactory().ChecksumCollection(), skipExistingPackages)
 
@@ -114,7 +114,7 @@ func aptlyMirrorUpdate(cmd *commander.Command, args []string) error {
 	context.GoContextHandleSignals()
 
 	count := len(queue)
-	context.Progress().Printf("Download queue: %d items (%s)\n", count, utils.HumanBytes(downloadSize))
+	context.Progress().PrintfStdErr("Download queue: %d items (%s)\n", count, utils.HumanBytes(downloadSize))
 
 	// Download from the queue
 	context.Progress().InitBar(downloadSize, true)
@@ -242,7 +242,7 @@ func aptlyMirrorUpdate(cmd *commander.Command, args []string) error {
 		return fmt.Errorf("unable to update: %s", err)
 	}
 
-	context.Progress().Printf("\nMirror `%s` has been successfully updated.\n", repo.Name)
+	context.Progress().PrintfStdErr("\nMirror `%s` has been successfully updated.\n", repo.Name)
 	return err
 }
 

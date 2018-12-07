@@ -152,14 +152,14 @@ func (g *GoSigner) Init() error {
 		i := 0
 		for name := range g.signer.Identities {
 			if i == 0 {
-				fmt.Printf("openpgp: Passphrase is required to unlock private key \"%s\"\n", name)
+				fmt.Fprintf(os.Stderr, "openpgp: Passphrase is required to unlock private key \"%s\"\n", name)
 			} else {
-				fmt.Printf("                         				          aka \"%s\"\n", name)
+				fmt.Fprintf(os.Stderr, "                         				          aka \"%s\"\n", name)
 			}
 			i++
 		}
 
-		fmt.Printf("openpgp: %s-bit %s key, ID %s, created %s\n",
+		fmt.Fprintf(os.Stderr, "openpgp: %s-bit %s key, ID %s, created %s\n",
 			keyBits(g.signer.PrimaryKey.PublicKey),
 			pubkeyAlgorithmName(g.signer.PrimaryKey.PubKeyAlgo),
 			KeyFromUint64(g.signer.PrimaryKey.KeyId),
@@ -217,7 +217,7 @@ func (g *GoSigner) decryptKey() error {
 
 // DetachedSign signs file with detached signature in ASCII format
 func (g *GoSigner) DetachedSign(source string, destination string) error {
-	fmt.Printf("openpgp: signing file '%s'...\n", filepath.Base(source))
+	fmt.Fprintf(os.Stderr, "openpgp: signing file '%s'...\n", filepath.Base(source))
 
 	message, err := os.Open(source)
 	if err != nil {
@@ -241,7 +241,7 @@ func (g *GoSigner) DetachedSign(source string, destination string) error {
 
 // ClearSign clear-signs the file
 func (g *GoSigner) ClearSign(source string, destination string) error {
-	fmt.Printf("openpgp: clearsigning file '%s'...\n", filepath.Base(source))
+	fmt.Fprintf(os.Stderr, "openpgp: clearsigning file '%s'...\n", filepath.Base(source))
 
 	message, err := os.Open(source)
 	if err != nil {
@@ -304,12 +304,12 @@ func (g *GoVerifier) InitKeyring() error {
 	}
 
 	if len(g.trustedKeyring) == 0 {
-		fmt.Printf("\nLooks like your keyring with trusted keys is empty. You might consider importing some keys.\n")
+		fmt.Fprintf(os.Stderr, "\nLooks like your keyring with trusted keys is empty. You might consider importing some keys.\n")
 		if len(g.keyRingFiles) == 0 {
 			// using default keyring
-			fmt.Printf("If you're running Debian or Ubuntu, it's a good idea to import current archive keys by running:\n\n")
-			fmt.Printf("  gpg --no-default-keyring --keyring /usr/share/keyrings/debian-archive-keyring.gpg --export | gpg --no-default-keyring --keyring trustedkeys.gpg --import\n")
-			fmt.Printf("\n(for Ubuntu, use /usr/share/keyrings/ubuntu-archive-keyring.gpg)\n\n")
+			fmt.Fprintf(os.Stderr, "If you're running Debian or Ubuntu, it's a good idea to import current archive keys by running:\n\n")
+			fmt.Fprintf(os.Stderr, "  gpg --no-default-keyring --keyring /usr/share/keyrings/debian-archive-keyring.gpg --export | gpg --no-default-keyring --keyring trustedkeys.gpg --import\n")
+			fmt.Fprintf(os.Stderr, "\n(for Ubuntu, use /usr/share/keyrings/ubuntu-archive-keyring.gpg)\n\n")
 		}
 	}
 
@@ -323,7 +323,7 @@ func (g *GoVerifier) AddKeyring(keyring string) {
 
 func (g *GoVerifier) showImportKeyTip(signers []signatureResult) {
 	if len(g.keyRingFiles) == 0 {
-		fmt.Printf("\nLooks like some keys are missing in your trusted keyring, you may consider importing them from keyserver:\n\n")
+		fmt.Fprintf(os.Stderr, "\nLooks like some keys are missing in your trusted keyring, you may consider importing them from keyserver:\n\n")
 
 		keys := make([]string, 0)
 
@@ -334,17 +334,17 @@ func (g *GoVerifier) showImportKeyTip(signers []signatureResult) {
 			keys = append(keys, string(KeyFromUint64(signer.IssuerKeyID)))
 		}
 
-		fmt.Printf("gpg --no-default-keyring --keyring trustedkeys.gpg --keyserver pool.sks-keyservers.net --recv-keys %s\n\n",
+		fmt.Fprintf(os.Stderr, "gpg --no-default-keyring --keyring trustedkeys.gpg --keyserver pool.sks-keyservers.net --recv-keys %s\n\n",
 			strings.Join(keys, " "))
 
-		fmt.Printf("Sometimes keys are stored in repository root in file named Release.key, to import such key:\n\n")
-		fmt.Printf("wget -O - https://some.repo/repository/Release.key | gpg --no-default-keyring --keyring trustedkeys.gpg --import\n\n")
+		fmt.Fprintf(os.Stderr, "Sometimes keys are stored in repository root in file named Release.key, to import such key:\n\n")
+		fmt.Fprintf(os.Stderr, "wget -O - https://some.repo/repository/Release.key | gpg --no-default-keyring --keyring trustedkeys.gpg --import\n\n")
 	}
 }
 
 func (g *GoVerifier) printLog(signers []signatureResult) {
 	for _, signer := range signers {
-		fmt.Printf("openpgp: Signature made %s using %s key ID %s\n",
+		fmt.Fprintf(os.Stderr, "openpgp: Signature made %s using %s key ID %s\n",
 			signer.CreationTime.Format(time.RFC1123),
 			pubkeyAlgorithmName(signer.PubKeyAlgo),
 			KeyFromUint64(signer.IssuerKeyID))
@@ -353,14 +353,14 @@ func (g *GoVerifier) printLog(signers []signatureResult) {
 			i := 0
 			for name := range signer.Entity.Identities {
 				if i == 0 {
-					fmt.Printf("openpgp: Good signature from \"%s\"\n", name)
+					fmt.Fprintf(os.Stderr, "openpgp: Good signature from \"%s\"\n", name)
 				} else {
-					fmt.Printf("                         aka \"%s\"\n", name)
+					fmt.Fprintf(os.Stderr, "                         aka \"%s\"\n", name)
 				}
 				i++
 			}
 		} else {
-			fmt.Printf("openpgp: Can't check signature: public key not found\n")
+			fmt.Fprintf(os.Stderr, "openpgp: Can't check signature: public key not found\n")
 		}
 	}
 }
@@ -480,7 +480,7 @@ func loadKeyRing(name string, ignoreMissing bool) (openpgp.EntityList, error) {
 	if err != nil {
 		if os.IsNotExist(err) {
 			if !ignoreMissing {
-				fmt.Printf("opengpg: failure opening keyring '%s': %s\n", name, err)
+				fmt.Fprintf(os.Stderr, "opengpg: failure opening keyring '%s': %s\n", name, err)
 			}
 			return nil, nil
 		}
