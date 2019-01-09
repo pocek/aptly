@@ -14,29 +14,35 @@ import (
 )
 
 func aptlyMirrorUpdate(cmd *commander.Command, args []string) error {
-	var err error
 	if len(args) != 1 {
 		cmd.Usage()
 		return commander.ErrCommandError
 	}
 
-	name := args[0]
+	repo, err := update(cmd, args[0])
+	if err != nil {
+		return err
+	}
 
+	return download(cmd, repo);
+}
+
+func update(cmd *commander.Command, name string) (*deb.RemoteRepo, error) {
 	repo, err := context.CollectionFactory().RemoteRepoCollection().ByName(name)
 	if err != nil {
-		return fmt.Errorf("unable to update: %s", err)
+		return nil, fmt.Errorf("unable to update: %s", err)
 	}
 
 	err = context.CollectionFactory().RemoteRepoCollection().LoadComplete(repo)
 	if err != nil {
-		return fmt.Errorf("unable to update: %s", err)
+		return nil, fmt.Errorf("unable to update: %s", err)
 	}
 
 	force := context.Flags().Lookup("force").Value.Get().(bool)
 	if !force {
 		err = repo.CheckLock()
 		if err != nil {
-			return fmt.Errorf("unable to update: %s", err)
+			return nil, fmt.Errorf("unable to update: %s", err)
 		}
 	}
 
@@ -45,18 +51,18 @@ func aptlyMirrorUpdate(cmd *commander.Command, args []string) error {
 
 	verifier, err := getVerifier(context.Flags())
 	if err != nil {
-		return fmt.Errorf("unable to initialize GPG verifier: %s", err)
+		return nil, fmt.Errorf("unable to initialize GPG verifier: %s", err)
 	}
 
 	err = repo.Fetch(context.Downloader(), verifier)
 	if err != nil {
-		return fmt.Errorf("unable to update: %s", err)
+		return nil, fmt.Errorf("unable to update: %s", err)
 	}
 
 	context.Progress().PrintfStdErr("Downloading & parsing package files...\n")
 	err = repo.DownloadPackageIndexes(context.Progress(), context.Downloader(), verifier, context.CollectionFactory(), ignoreMismatch, maxTries)
 	if err != nil {
-		return fmt.Errorf("unable to update: %s", err)
+		return nil, fmt.Errorf("unable to update: %s", err)
 	}
 
 	if repo.Filter != "" {
@@ -65,20 +71,28 @@ func aptlyMirrorUpdate(cmd *commander.Command, args []string) error {
 
 		filterQuery, err = query.Parse(repo.Filter)
 		if err != nil {
-			return fmt.Errorf("unable to update: %s", err)
+			return nil, fmt.Errorf("unable to update: %s", err)
 		}
 
 		var oldLen, newLen int
 		oldLen, newLen, err = repo.ApplyFilter(context.DependencyOptions(), filterQuery, context.Progress())
 		if err != nil {
-			return fmt.Errorf("unable to update: %s", err)
+			return nil, fmt.Errorf("unable to update: %s", err)
 		}
 		context.Progress().PrintfStdErr("Packages filtered: %d -> %d.\n", oldLen, newLen)
 	}
 
+	return repo, nil
+}
+
+func download(cmd *commander.Command, repo *deb.RemoteRepo) error {
+	ignoreMismatch := context.Flags().Lookup("ignore-checksums").Value.Get().(bool)
+	maxTries := context.Flags().Lookup("max-tries").Value.Get().(int)
+
 	var (
 		downloadSize int64
 		queue        []deb.PackageDownloadTask
+		err          error
 	)
 
 	skipExistingPackages := context.Flags().Lookup("skip-existing-packages").Value.Get().(bool)
