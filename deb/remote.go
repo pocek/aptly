@@ -421,6 +421,10 @@ ok:
 	return nil
 }
 
+func (repo *RemoteRepo) GetPackageList() *PackageList {
+	return repo.packageList;
+}
+
 // DownloadPackageIndexes downloads & parses package index files
 func (repo *RemoteRepo) DownloadPackageIndexes(progress aptly.Progress, d aptly.Downloader, verifier pgp.Verifier, collectionFactory *CollectionFactory,
 	ignoreMismatch bool, maxTries int) error {
