@@ -72,7 +72,6 @@ func aptlyLockfileCreate(cmd *commander.Command, args []string) error {
 		pl.ForEach(func(pkg *deb.Package) error {
 			pkg.PinPriority = 500
 			s := pkg.Stanza()
-			s["APT-ID"] = strconv.Itoa(len(allPkgs))
 			s["APT-Pin"] = strconv.Itoa(pkg.PinPriority)
 			s["APT-Candidate"] = "yes"
 			if s["Essential"] == "yes" {
@@ -104,6 +103,19 @@ func aptlyLockfileCreate(cmd *commander.Command, args []string) error {
 		}
 		return false
 	})
+
+	{
+		uniquePackages := []deb.Stanza{}
+		lastKey := ""
+		for _, x := range allPkgs {
+			if x["SHA256"] != lastKey {
+				x["APT-ID"] = strconv.Itoa(len(uniquePackages))
+				uniquePackages = append(uniquePackages, x)
+				lastKey = x["SHA256"]
+			}
+		}
+		allPkgs = uniquePackages
+	}
 
 	if context.Flags().Lookup("print-edsp").Value.Get().(bool) {
 		errors := make(chan error)
