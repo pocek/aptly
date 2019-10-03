@@ -22,6 +22,7 @@ const (
 	FILETYPE_SOURCE
 	FILETYPE_RELEASE
 	FILETYPE_INSTALLER
+	FILETYPE_LOCKFILE
 )
 
 // Canonical order of fields in stanza
@@ -101,6 +102,25 @@ var (
 	canonicalOrderInstaller = []string{
 		"",
 	}
+
+	canonicalOrderLockFile = []string{
+		"Package",
+		"Architecture",
+		"Version",
+		"Replaces",
+		"Provides",
+		"Depends",
+		"Pre-Depends",
+		"Conflicts",
+		"Breaks",
+		"Filename",
+		"MD5Sum",
+		"MD5sum",
+		"SHA1",
+		"SHA256",
+		"SHA512",
+		"Multi-Arch",
+	}
 )
 
 // Copy returns copy of Stanza
@@ -178,6 +198,8 @@ func (s Stanza) WriteTo(w *bufio.Writer, fileType FileType) error {
 		canonicalOrder = canonicalOrderRelease
 	case FILETYPE_INSTALLER:
 		canonicalOrder = canonicalOrderInstaller
+	case FILETYPE_LOCKFILE:
+		canonicalOrder = canonicalOrderLockFile
 	}
 
 	for _, field := range canonicalOrder {
@@ -191,8 +213,8 @@ func (s Stanza) WriteTo(w *bufio.Writer, fileType FileType) error {
 		}
 	}
 
-	// no extra fields in installer
-	if fileType != FILETYPE_INSTALLER {
+	// no extra fields in installer or lockfile
+	if fileType != FILETYPE_INSTALLER && fileType != FILETYPE_LOCKFILE {
 		// Print extra fields in deterministic order (alphabetical)
 		keys := make([]string, len(s))
 		i := 0

@@ -38,7 +38,7 @@ func generateEdsp(cmd *commander.Command, install_packages []string,
 		s := pkg.Copy()
 		delete(s, "Recommends")
 		delete(s, "Suggests")
-		err := s.WriteTo(out, false, false, false)
+		err := s.WriteTo(out, deb.FILETYPE_BINARY)
 		if err != nil {
 			return err
 		}
@@ -207,7 +207,7 @@ func aptlyLockfileCreate(cmd *commander.Command, args []string) error {
 		defer bufWriter.Flush();
 
 		for _, pkg := range installedPkgs {
-			pkg.WriteTo(bufWriter, false, false, false)
+			pkg.WriteTo(bufWriter, deb.FILETYPE_LOCKFILE)
 			fmt.Fprintf(bufWriter, "\n")
 		}
 
