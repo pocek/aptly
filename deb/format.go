@@ -15,6 +15,15 @@ type Stanza map[string]string
 // MaxFieldSize is maximum stanza field size in bytes
 const MaxFieldSize = 2 * 1024 * 1024
 
+type FileType int
+
+const (
+	FILETYPE_BINARY FileType = iota
+	FILETYPE_SOURCE
+	FILETYPE_RELEASE
+	FILETYPE_INSTALLER
+)
+
 // Canonical order of fields in stanza
 // Taken from: http://bazaar.launchpad.net/~ubuntu-branches/ubuntu/vivid/apt/vivid/view/head:/apt-pkg/tagfile.cc#L504
 var (
@@ -158,15 +167,16 @@ func writeField(w *bufio.Writer, field, value string, isRelease bool) (err error
 }
 
 // WriteTo saves stanza back to stream, modifying itself on the fly
-func (s Stanza) WriteTo(w *bufio.Writer, isSource, isRelease, isInstaller bool) error {
-	canonicalOrder := canonicalOrderBinary
-	if isSource {
+func (s Stanza) WriteTo(w *bufio.Writer, fileType FileType) error {
+	canonicalOrder := canonicalOrderBinary;
+	switch fileType {
+	case FILETYPE_BINARY:
+		canonicalOrder = canonicalOrderBinary
+	case FILETYPE_SOURCE:
 		canonicalOrder = canonicalOrderSource
-	}
-	if isRelease {
+	case FILETYPE_RELEASE:
 		canonicalOrder = canonicalOrderRelease
-	}
-	if isInstaller {
+	case FILETYPE_INSTALLER:
 		canonicalOrder = canonicalOrderInstaller
 	}
 
@@ -174,7 +184,7 @@ func (s Stanza) WriteTo(w *bufio.Writer, isSource, isRelease, isInstaller bool) 
 		value, ok := s[field]
 		if ok {
 			delete(s, field)
-			err := writeField(w, field, value, isRelease)
+			err := writeField(w, field, value, fileType == FILETYPE_RELEASE)
 			if err != nil {
 				return err
 			}
@@ -182,7 +192,7 @@ func (s Stanza) WriteTo(w *bufio.Writer, isSource, isRelease, isInstaller bool) 
 	}
 
 	// no extra fields in installer
-	if !isInstaller {
+	if fileType != FILETYPE_INSTALLER {
 		// Print extra fields in deterministic order (alphabetical)
 		keys := make([]string, len(s))
 		i := 0
@@ -192,7 +202,7 @@ func (s Stanza) WriteTo(w *bufio.Writer, isSource, isRelease, isInstaller bool) 
 		}
 		sort.Strings(keys)
 		for _, field := range keys {
-			err := writeField(w, field, s[field], isRelease)
+			err := writeField(w, field, s[field], fileType == FILETYPE_RELEASE)
 			if err != nil {
 				return err
 			}

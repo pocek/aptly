@@ -641,7 +641,13 @@ func (p *PublishedRepo) Publish(packagePool aptly.PackagePool, publishedStorageP
 						return err
 					}
 
-					err = pkg.Stanza().WriteTo(bufWriter, pkg.IsSource, false, pkg.IsInstaller)
+					fileType := FILETYPE_BINARY
+					if pkg.IsSource {
+						fileType = FILETYPE_SOURCE
+					} else if pkg.IsInstaller {
+						fileType = FILETYPE_INSTALLER
+					}
+					err = pkg.Stanza().WriteTo(bufWriter, fileType)
 					if err != nil {
 						return err
 					}
@@ -717,7 +723,7 @@ func (p *PublishedRepo) Publish(packagePool aptly.PackagePool, publishedStorageP
 					return fmt.Errorf("unable to get ReleaseIndex writer: %s", err)
 				}
 
-				err = release.WriteTo(bufWriter, false, true, false)
+				err = release.WriteTo(bufWriter, FILETYPE_RELEASE)
 				if err != nil {
 					return fmt.Errorf("unable to create Release file: %s", err)
 				}
@@ -798,7 +804,7 @@ func (p *PublishedRepo) Publish(packagePool aptly.PackagePool, publishedStorageP
 		return err
 	}
 
-	err = release.WriteTo(bufWriter, false, true, false)
+	err = release.WriteTo(bufWriter, FILETYPE_RELEASE)
 	if err != nil {
 		return fmt.Errorf("unable to create Release file: %s", err)
 	}

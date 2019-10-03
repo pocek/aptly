@@ -79,7 +79,11 @@ func aptlyPackageShow(cmd *commander.Command, args []string) error {
 	result := q.Query(context.CollectionFactory().PackageCollection())
 
 	err = result.ForEach(func(p *deb.Package) error {
-		p.Stanza().WriteTo(w, p.IsSource, false, false)
+		fileType := deb.FILETYPE_BINARY
+		if p.IsSource {
+			fileType = deb.FILETYPE_SOURCE
+		}
+		p.Stanza().WriteTo(w, fileType)
 		w.Flush()
 		fmt.Printf("\n")
 
