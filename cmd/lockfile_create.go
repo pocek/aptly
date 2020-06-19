@@ -128,9 +128,15 @@ func aptlyLockfileCreate(cmd *commander.Command, args []string) error {
 	} else {
 		solver := context.Flags().Lookup("solver").Value.Get().(string)
 
-        installedPkgs, err := solveDepsEdsp(solver, installPkgsList, allPkgs);
-		if err != nil {
-			return fmt.Errorf("Deps solving failed: %s", err)
+		installedPkgs := []deb.Stanza{};
+		var err error;
+		if solver == "no-deps" {
+			installedPkgs = solveNoDeps(installPkgs, allPkgs);
+		} else {
+		    installedPkgs, err = solveDepsEdsp(solver, installPkgsList, allPkgs);
+			if err != nil {
+				return fmt.Errorf("Deps solving failed: %s", err)
+			}
 		}
 
 		sort.Slice(installedPkgs, func(i, j int) bool {
@@ -225,6 +231,26 @@ func solveDepsEdsp(solver string, installPkgsList []string, allPkgs []deb.Stanza
 		return nil, fmt.Errorf("Failed generating EDSP: %s", err)
 	}
 	return installedPkgs, nil;
+}
+
+func solveNoDeps(installPkgs map[string]bool, allPkgs []deb.Stanza) []deb.Stanza {
+	// This is used if you don't want to perform deps resolution, you just want
+	// the listed packages.
+	selectedPkgs := map[string]deb.Stanza{}
+	for _, pkg := range allPkgs {
+		if installPkgs[pkg["Package"]] {
+			existing := selectedPkgs[pkg["Package"]]
+			if existing == nil || deb.CompareVersions(existing["Version"], pkg["Version"]) < 0 {
+				selectedPkgs[pkg["Package"]] = pkg
+			}
+		}
+	}
+
+	installedPkgs := []deb.Stanza{};
+	for _, pkg := range selectedPkgs {
+		installedPkgs = append(installedPkgs, pkg);
+	}
+	return installedPkgs
 }
 
 func makeCmdLockfile() *commander.Command {
