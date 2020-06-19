@@ -149,8 +149,16 @@ func aptlyLockfileCreate(cmd *commander.Command, args []string) error {
 		defer bufWriter.Flush();
 
 		for _, pkg := range installedPkgs {
+			delete(installPkgs, pkg["Package"])
 			pkg.WriteTo(bufWriter, deb.FILETYPE_LOCKFILE)
 			fmt.Fprintf(bufWriter, "\n")
+		}
+
+		for pkgname, requested := range installPkgs {
+			if requested {
+				return fmt.Errorf(
+					"Requested package %s not found after deps solving, %s", pkgname, installPkgs)
+			}
 		}
 
 		return nil
