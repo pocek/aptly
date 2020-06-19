@@ -17,7 +17,7 @@ import (
 	"github.com/smira/flag"
 )
 
-func generateEdsp(cmd *commander.Command, install_packages []string,
+func generateEdsp(install_packages []string,
                   out_writer io.Writer, allPkgs []deb.Stanza) error {
 	out := bufio.NewWriter(out_writer)
 	defer out.Flush()
@@ -119,7 +119,7 @@ func aptlyLockfileCreate(cmd *commander.Command, args []string) error {
 
 	if context.Flags().Lookup("print-edsp").Value.Get().(bool) {
 		errors := make(chan error)
-		go func() {errors <- generateEdsp(cmd, installPkgsList, os.Stdout, allPkgs)}()
+		go func() {errors <- generateEdsp(installPkgsList, os.Stdout, allPkgs)}()
 		err := <-errors
 		if err != nil {
 			return fmt.Errorf("unable to create lockfile: %s", err)
@@ -127,77 +127,10 @@ func aptlyLockfileCreate(cmd *commander.Command, args []string) error {
 		return nil;
 	} else {
 		solver := context.Flags().Lookup("solver").Value.Get().(string)
-		if !path.IsAbs(solver) {
-			solver = path.Join("/usr/lib/apt/solvers", solver)
-		}
 
-		proc := exec.Command(solver)
-		//proc := exec.Command("apt-cudf", "--solver", solver)
-
-		edsp, err := proc.StdinPipe()
+        installedPkgs, err := solveDepsEdsp(solver, installPkgsList, allPkgs);
 		if err != nil {
-			return err
-		}
-
-		out, err := proc.StdoutPipe()
-		if err != nil {
-			return err
-		}
-
-		proc.Stderr = os.Stderr
-
-		errors := make(chan error)
-		go func() {
-			err := generateEdsp(cmd, installPkgsList, edsp, allPkgs)
-			closeerr := edsp.Close()
-			if err != nil {
-				errors <- err
-			}
-			if closeerr != nil {
-				errors <- closeerr
-			}
-			close(errors)
-		}()
-
-		err = proc.Start()
-		if err != nil {
-			return err
-		}
-
-		reader := deb.NewControlFileReader(out, false, false)
-
-		installedPkgs := []deb.Stanza{}
-
-		for {
-			stanza, err := reader.ReadStanza()
-			if err != nil {
-				return err
-			}
-			if stanza == nil {
-				break
-			}
-			if id, ok := stanza["Install"]; ok {
-				iid, err := strconv.Atoi(id)
-				if err != nil {
-					return fmt.Errorf(
-						"Unexpected package id provided by solver %s.  Was expecting int got %s",
-						solver, id)
-				}
-				pkg := allPkgs[iid]
-				delete(pkg, "APT-ID")
-				delete(pkg, "APT-Pin")
-				delete(pkg, "APT-Candidate")
-				installedPkgs = append(installedPkgs, pkg)
-			} else if message, ok := stanza["Message"]; ok {
-				log.Println(message)
-			} else {
-				log.Println("Unrecognised stanza returned by solver:", stanza)
-			}
-		}
-
-		err = <-errors
-		if err != nil {
-			return fmt.Errorf("Failed generating EDSP: %s", err)
+			return fmt.Errorf("Deps solving failed: %s", err)
 		}
 
 		sort.Slice(installedPkgs, func(i, j int) bool {
@@ -211,13 +144,87 @@ func aptlyLockfileCreate(cmd *commander.Command, args []string) error {
 			fmt.Fprintf(bufWriter, "\n")
 		}
 
-		err = proc.Wait()
-		if err != nil {
-			return err
-		}
-
 		return nil
 	}
+}
+
+func solveDepsEdsp(solver string, installPkgsList []string, allPkgs []deb.Stanza) (installedPkgs []deb.Stanza, err error) {
+	if !path.IsAbs(solver) {
+		solver = path.Join("/usr/lib/apt/solvers", solver)
+	}
+
+	proc := exec.Command(solver)
+	//proc := exec.Command("apt-cudf", "--solver", solver)
+
+	edsp, err := proc.StdinPipe()
+	if err != nil {
+		return nil, err
+	}
+
+	out, err := proc.StdoutPipe()
+	if err != nil {
+		return nil, err
+	}
+
+	proc.Stderr = os.Stderr
+
+	errors := make(chan error)
+	go func() {
+		err := generateEdsp(installPkgsList, edsp, allPkgs)
+		closeerr := edsp.Close()
+		if err != nil {
+			errors <- err
+		}
+		if closeerr != nil {
+			errors <- closeerr
+		}
+		close(errors)
+	}()
+
+	err = proc.Start()
+	if err != nil {
+		return nil, err
+	}
+
+	reader := deb.NewControlFileReader(out, false, false)
+
+	for {
+		stanza, err := reader.ReadStanza()
+		if err != nil {
+			return nil, err
+		}
+		if stanza == nil {
+			break
+		}
+		if id, ok := stanza["Install"]; ok {
+			iid, err := strconv.Atoi(id)
+			if err != nil {
+				return nil, fmt.Errorf(
+					"Unexpected package id provided by solver %s.  Was expecting int got %s",
+					solver, id)
+			}
+			pkg := allPkgs[iid]
+			delete(pkg, "APT-ID")
+			delete(pkg, "APT-Pin")
+			delete(pkg, "APT-Candidate")
+			installedPkgs = append(installedPkgs, pkg)
+		} else if message, ok := stanza["Message"]; ok {
+			log.Println(message)
+		} else {
+			log.Println("Unrecognised stanza returned by solver:", stanza)
+		}
+	}
+
+	err = proc.Wait()
+	if err != nil {
+		return nil, fmt.Errorf("Solver process failed: %s", err)
+	}
+
+	err = <-errors
+	if err != nil {
+		return nil, fmt.Errorf("Failed generating EDSP: %s", err)
+	}
+	return installedPkgs, nil;
 }
 
 func makeCmdLockfile() *commander.Command {
