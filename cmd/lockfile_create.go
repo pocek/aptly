@@ -57,8 +57,13 @@ func aptlyLockfileCreate(cmd *commander.Command, args []string) error {
 		return fmt.Errorf("No mirrors specified")
 	}
 
+	bootstrap := context.Flags().Lookup("bootstrap").Value.Get().(string)
 	include_essential := context.Flags().Lookup("include-essential").Value.Get().(bool)
 	include_required := context.Flags().Lookup("include-priority-required").Value.Get().(bool)
+
+	if bootstrap == "" {
+		bootstrap = mirrors[0]
+	}
 
 	allPkgs := []deb.Stanza{}
 	installPkgs := map[string]bool{}
@@ -77,10 +82,10 @@ func aptlyLockfileCreate(cmd *commander.Command, args []string) error {
 			s := pkg.Stanza()
 			s["APT-Pin"] = strconv.Itoa(pkg.PinPriority)
 			s["APT-Candidate"] = "yes"
-			if s["Essential"] == "yes" && include_essential {
+			if s["Essential"] == "yes" && include_essential && mirror == bootstrap {
 				installPkgs[s["Package"]] = true
 			}
-			if s["Priority"] == "required" && include_required {
+			if s["Priority"] == "required" && include_required && mirror == bootstrap {
 				installPkgs[s["Package"]] = true
 			}
 			allPkgs = append(allPkgs, s)
@@ -288,6 +293,7 @@ func makeCmdLockfileCreate() *commander.Command {
 	cmd.Flag.Bool("print-edsp", false, "write EDSP format to stdout")
 	cmd.Flag.Bool("include-essential", true, "Include all packages marked 'Essential'")
 	cmd.Flag.Bool("include-priority-required", true, "Include all packages marked 'Priority: Required'")
+	cmd.Flag.String("bootstrap", "", "mirror from which to install required and essential packages")
 	cmd.Flag.Int64("download-limit", 0, "limit download speed (kbytes/sec)")
 	cmd.Flag.Int("max-tries", 1, "max download tries till process fails with download error")
 	cmd.Flag.Var(&keyRingsFlag{}, "keyring", "gpg keyring to use when verifying Release file (could be specified multiple times)")
