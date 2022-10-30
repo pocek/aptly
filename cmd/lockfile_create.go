@@ -18,7 +18,7 @@ import (
 )
 
 func generateEdsp(install_packages []string,
-                  out_writer io.Writer, allPkgs []deb.Stanza) error {
+	out_writer io.Writer, allPkgs []deb.Stanza) error {
 	out := bufio.NewWriter(out_writer)
 	defer out.Flush()
 
@@ -60,7 +60,7 @@ func aptlyLockfileCreate(cmd *commander.Command, args []string) error {
 	include_essential := context.Flags().Lookup("include-essential").Value.Get().(bool)
 	include_required := context.Flags().Lookup("include-priority-required").Value.Get().(bool)
 
-	allPkgs := []deb.Stanza{};
+	allPkgs := []deb.Stanza{}
 	installPkgs := map[string]bool{}
 	for _, pkgname := range args {
 		installPkgs[pkgname] = true
@@ -94,7 +94,7 @@ func aptlyLockfileCreate(cmd *commander.Command, args []string) error {
 	}
 	sort.Strings(installPkgsList)
 
-	sort.Slice(allPkgs, func (i, j int) bool {
+	sort.Slice(allPkgs, func(i, j int) bool {
 		if allPkgs[i]["Package"] != allPkgs[j]["Package"] {
 			return allPkgs[i]["Package"] < allPkgs[j]["Package"]
 		}
@@ -122,21 +122,21 @@ func aptlyLockfileCreate(cmd *commander.Command, args []string) error {
 
 	if context.Flags().Lookup("print-edsp").Value.Get().(bool) {
 		errors := make(chan error)
-		go func() {errors <- generateEdsp(installPkgsList, os.Stdout, allPkgs)}()
+		go func() { errors <- generateEdsp(installPkgsList, os.Stdout, allPkgs) }()
 		err := <-errors
 		if err != nil {
 			return fmt.Errorf("unable to create lockfile: %s", err)
 		}
-		return nil;
+		return nil
 	} else {
 		solver := context.Flags().Lookup("solver").Value.Get().(string)
 
-		installedPkgs := []deb.Stanza{};
-		var err error;
+		installedPkgs := []deb.Stanza{}
+		var err error
 		if solver == "no-deps" {
-			installedPkgs = solveNoDeps(installPkgs, allPkgs);
+			installedPkgs = solveNoDeps(installPkgs, allPkgs)
 		} else {
-		    installedPkgs, err = solveDepsEdsp(solver, installPkgsList, allPkgs);
+			installedPkgs, err = solveDepsEdsp(solver, installPkgsList, allPkgs)
 			if err != nil {
 				return fmt.Errorf("Deps solving failed: %s", err)
 			}
@@ -146,7 +146,7 @@ func aptlyLockfileCreate(cmd *commander.Command, args []string) error {
 			return installedPkgs[i]["Package"] < installedPkgs[j]["Package"]
 		})
 		bufWriter := bufio.NewWriter(os.Stdout)
-		defer bufWriter.Flush();
+		defer bufWriter.Flush()
 
 		for _, pkg := range installedPkgs {
 			delete(installPkgs, pkg["Package"])
@@ -241,7 +241,7 @@ func solveDepsEdsp(solver string, installPkgsList []string, allPkgs []deb.Stanza
 	if err != nil {
 		return nil, fmt.Errorf("Failed generating EDSP: %s", err)
 	}
-	return installedPkgs, nil;
+	return installedPkgs, nil
 }
 
 func solveNoDeps(installPkgs map[string]bool, allPkgs []deb.Stanza) []deb.Stanza {
@@ -257,9 +257,9 @@ func solveNoDeps(installPkgs map[string]bool, allPkgs []deb.Stanza) []deb.Stanza
 		}
 	}
 
-	installedPkgs := []deb.Stanza{};
+	installedPkgs := []deb.Stanza{}
 	for _, pkg := range selectedPkgs {
-		installedPkgs = append(installedPkgs, pkg);
+		installedPkgs = append(installedPkgs, pkg)
 	}
 	return installedPkgs
 }
@@ -279,8 +279,8 @@ func makeCmdLockfileCreate() *commander.Command {
 		Run:       aptlyLockfileCreate,
 		UsageLine: "create -mirror xyz packages...",
 		Short:     "create lockfile",
-		Long: `Writes a lockfile to stdout`,
-		Flag: *flag.NewFlagSet("aptly-mirror-update", flag.ExitOnError),
+		Long:      `Writes a lockfile to stdout`,
+		Flag:      *flag.NewFlagSet("aptly-mirror-update", flag.ExitOnError),
 	}
 
 	cmd.Flag.Bool("force", false, "force update mirror even if it is locked by another process")
