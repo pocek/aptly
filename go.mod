@@ -5,6 +5,7 @@ go 1.19
 require (
 	github.com/AlekSi/pointer v1.0.0
 	github.com/DisposaBoy/JsonConfigReader v0.0.0-20130112093355-33a99fdf1d5e
+	github.com/ProtonMail/go-crypto v0.0.0-20230426101702-58e86b294756
 	github.com/awalterschulze/gographviz v0.0.0-20160912181450-761fd5fbb34e
 	github.com/aws/aws-sdk-go v1.13.31
 	github.com/cheggaaa/pb v1.0.10
@@ -25,12 +26,13 @@ require (
 	github.com/syndtr/goleveldb v0.0.0-20180331014930-714f901b98fd
 	github.com/ugorji/go v0.0.0-20140221154404-71c2886f5a67
 	github.com/wsxiaoys/terminal v0.0.0-20160513160801-0940f3fc43a0
-	golang.org/x/crypto v0.0.0-20200622213623-75b288015ac9
+	golang.org/x/crypto v0.7.0
 	golang.org/x/sys v0.7.0
 	gopkg.in/check.v1 v1.0.0-20161208181325-20d25e280405
 )
 
 require (
+	github.com/cloudflare/circl v1.1.0 // indirect
 	github.com/fatih/color v1.15.0 // indirect
 	github.com/gin-contrib/sse v0.0.0-20170109093832-22d885f9ecc7 // indirect
 	github.com/go-ini/ini v1.26.0 // indirect
@@ -50,6 +52,7 @@ require (
 	github.com/stretchr/testify v1.8.2 // indirect
 	github.com/vmihailenco/msgpack v4.0.4+incompatible // indirect
 	golang.org/x/net v0.9.0 // indirect
+	golang.org/x/term v0.7.0 // indirect
 	google.golang.org/appengine v1.6.7 // indirect
 	google.golang.org/protobuf v1.28.0 // indirect
 	gopkg.in/cheggaaa/pb.v1 v1.0.28 // indirect
