@@ -120,6 +120,7 @@ var (
 		"SHA256",
 		"SHA512",
 		"Multi-Arch",
+		"X-Archive-Root",
 	}
 )
 

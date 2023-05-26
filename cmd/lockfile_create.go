@@ -82,6 +82,7 @@ func aptlyLockfileCreate(cmd *commander.Command, args []string) error {
 			s := pkg.Stanza()
 			s["APT-Pin"] = strconv.Itoa(pkg.PinPriority)
 			s["APT-Candidate"] = "yes"
+			s["X-Archive-Root"] = strings.TrimSuffix(repo.ArchiveRoot, "/")
 			if s["Essential"] == "yes" && include_essential && mirror == bootstrap {
 				installPkgs[s["Package"]] = true
 			}
