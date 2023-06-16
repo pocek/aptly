@@ -107,6 +107,7 @@ var (
 		"Package",
 		"Architecture",
 		"Version",
+		"Installed-Size",
 		"Replaces",
 		"Provides",
 		"Depends",
