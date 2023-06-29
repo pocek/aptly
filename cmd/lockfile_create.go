@@ -80,6 +80,12 @@ func aptlyLockfileCreate(cmd *commander.Command, args []string) error {
 		pl.ForEach(func(pkg *deb.Package) error {
 			pkg.PinPriority = 500
 			s := pkg.Stanza()
+			delete(s, "Description")
+			delete(s, "Description-Md5")
+			delete(s, "Homepage")
+			delete(s, "Maintainer")
+			delete(s, "Original-Maintainer")
+			delete(s, "Tag")
 			s["APT-Pin"] = strconv.Itoa(pkg.PinPriority)
 			s["APT-Candidate"] = "yes"
 			s["X-Archive-Root"] = strings.TrimSuffix(repo.ArchiveRoot, "/")
