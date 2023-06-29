@@ -71,6 +71,15 @@ func aptlyLockfileCreate(cmd *commander.Command, args []string) error {
 		installPkgs[pkgname] = true
 	}
 
+	aptReleaseFields := []string{"Version", "Origin", "Suite", "Codename", "Label"}
+	aptReleaseFieldsShort := map[string]string{
+		"Version": "v",
+		"Origin": "o",
+		"Suite": "a",
+		"Codename": "n",
+		"Label": "l",
+	}
+
 	for _, mirror := range mirrors {
 		repo, err := update(cmd, mirror)
 		if err != nil {
@@ -89,6 +98,21 @@ func aptlyLockfileCreate(cmd *commander.Command, args []string) error {
 			s["APT-Pin"] = strconv.Itoa(pkg.PinPriority)
 			s["APT-Candidate"] = "yes"
 			s["X-Archive-Root"] = strings.TrimSuffix(repo.ArchiveRoot, "/")
+
+			// Construct APT-Release field.
+			// This is not fully correct, because one package may be present in
+			// many releases. Can be improved later if needed.
+			aptRelease := []string{}
+			for _, field := range aptReleaseFields {
+				val, ok := repo.Meta[field]
+				if ok {
+					aptRelease = append(aptRelease, fmt.Sprintf("%s=%s", aptReleaseFieldsShort[field], val))
+				}
+			}
+			if len(aptRelease) > 0 {
+				s["APT-Release"] = " " + strings.Join(aptRelease, ",")
+			}
+
 			if s["Essential"] == "yes" && include_essential && mirror == bootstrap {
 				installPkgs[s["Package"]] = true
 			}

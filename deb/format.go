@@ -153,6 +153,8 @@ func isMultilineField(field string, isRelease bool) bool {
 		return true
 	case "Package-List":
 		return true
+	case "APT-Release":
+		return true
 	case "MD5Sum":
 		return isRelease
 	case "SHA1":
