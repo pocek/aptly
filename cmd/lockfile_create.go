@@ -300,7 +300,7 @@ func makeCmdLockfileCreate() *commander.Command {
 	cmd.Flag.Var(&keyRingsFlag{}, "keyring", "gpg keyring to use when verifying Release file (could be specified multiple times)")
 	cmd.Flag.String("architectures", "", "list of architectures comma separated")
 	cmd.Flag.String("mirrors", "", "list of mirrors comma separated")
-	cmd.Flag.String("solver", "apt", "CUDF solver to use for dependency resolution")
+	cmd.Flag.String("solver", "apt", "EDSP solver to use for dependency resolution")
 
 	return cmd
 }
