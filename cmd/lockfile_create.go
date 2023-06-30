@@ -129,7 +129,7 @@ func aptlyLockfileCreate(cmd *commander.Command, args []string) error {
 	}
 	sort.Strings(installPkgsList)
 
-	sort.Slice(allPkgs, func(i, j int) bool {
+	sort.SliceStable(allPkgs, func(i, j int) bool {
 		if allPkgs[i]["Package"] != allPkgs[j]["Package"] {
 			return allPkgs[i]["Package"] < allPkgs[j]["Package"]
 		}
