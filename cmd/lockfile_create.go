@@ -96,7 +96,6 @@ func aptlyLockfileCreate(cmd *commander.Command, args []string) error {
 			delete(s, "Original-Maintainer")
 			delete(s, "Tag")
 			s["APT-Pin"] = strconv.Itoa(pkg.PinPriority)
-			s["APT-Candidate"] = "yes"
 			s["X-Archive-Root"] = strings.TrimSuffix(repo.ArchiveRoot, "/")
 
 			// Construct APT-Release field.
@@ -259,7 +258,6 @@ func solveDepsEdsp(solver string, installPkgsList []string, allPkgs []deb.Stanza
 			pkg := allPkgs[iid]
 			delete(pkg, "APT-ID")
 			delete(pkg, "APT-Pin")
-			delete(pkg, "APT-Candidate")
 			installedPkgs = append(installedPkgs, pkg)
 		} else if message, ok := stanza["Message"]; ok {
 			log.Println(message)
