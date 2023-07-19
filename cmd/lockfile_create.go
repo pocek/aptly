@@ -97,6 +97,8 @@ func aptlyLockfileCreate(cmd *commander.Command, args []string) error {
 			delete(s, "Tag")
 			s["APT-Pin"] = strconv.Itoa(pkg.PinPriority)
 			s["X-Archive-Root"] = strings.TrimSuffix(repo.ArchiveRoot, "/")
+			s["Source-Version"] = pkg.GetField("$SourceVersion")
+			s["Source"] = pkg.GetField("$Source")
 
 			// Construct APT-Release field.
 			// This is not fully correct, because one package may be present in
