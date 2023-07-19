@@ -121,6 +121,7 @@ var (
 		"SHA256",
 		"SHA512",
 		"Multi-Arch",
+		"APT-Release",
 		"X-Archive-Root",
 	}
 )
