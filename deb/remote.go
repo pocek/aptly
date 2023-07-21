@@ -543,6 +543,7 @@ func (repo *RemoteRepo) DownloadPackageIndexes(progress aptly.Progress, d aptly.
 					return err
 				}
 			}
+			p.Component = component
 			err = repo.packageList.Add(p)
 			if err != nil {
 				if _, ok := err.(*PackageConflictError); ok {

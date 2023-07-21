@@ -18,6 +18,7 @@ type Package struct {
 	Name         string
 	Version      string
 	Architecture string
+	Component    string
 	// If this source package, this field holds "real" architecture value,
 	// while Architecture would be equal to "source"
 	SourceArchitecture string

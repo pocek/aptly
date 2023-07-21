@@ -109,6 +109,9 @@ func aptlyLockfileCreate(cmd *commander.Command, args []string) error {
 					aptRelease = append(aptRelease, fmt.Sprintf("%s=%s", aptReleaseFieldsShort[field], val))
 				}
 			}
+			if pkg.Component != "" {
+				aptRelease = append(aptRelease, fmt.Sprintf("c=%s", pkg.Component))
+			}
 			if len(aptRelease) > 0 {
 				s["APT-Release"] = " " + strings.Join(aptRelease, ",")
 			}
