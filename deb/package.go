@@ -35,8 +35,6 @@ type Package struct {
 	IsUdeb bool
 	// Is this >= 0.6 package?
 	V06Plus bool
-	// Used for dependency resolution
-	PinPriority int
 	// Offload fields
 	deps     *PackageDependencies
 	extra    *Stanza

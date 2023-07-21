@@ -87,7 +87,6 @@ func aptlyLockfileCreate(cmd *commander.Command, args []string) error {
 		}
 		pl := repo.GetPackageList()
 		pl.ForEach(func(pkg *deb.Package) error {
-			pkg.PinPriority = 500
 			s := pkg.Stanza()
 			delete(s, "Description")
 			delete(s, "Description-Md5")
@@ -95,7 +94,7 @@ func aptlyLockfileCreate(cmd *commander.Command, args []string) error {
 			delete(s, "Maintainer")
 			delete(s, "Original-Maintainer")
 			delete(s, "Tag")
-			s["APT-Pin"] = strconv.Itoa(pkg.PinPriority)
+			s["APT-Pin"] = "500";
 			s["X-Archive-Root"] = strings.TrimSuffix(repo.ArchiveRoot, "/")
 			s["Source-Version"] = pkg.GetField("$SourceVersion")
 			s["Source"] = pkg.GetField("$Source")
