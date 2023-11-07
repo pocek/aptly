@@ -105,6 +105,7 @@ var (
 
 	canonicalOrderLockFile = []string{
 		"Package",
+		"Source",
 		"Architecture",
 		"Version",
 		"Installed-Size",
