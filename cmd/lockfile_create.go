@@ -50,33 +50,6 @@ func generateEdsp(install_packages []string,
 	return nil
 }
 
-func checkUnused(mirrors []string, unusedComponents map[string]map[string]bool) error {
-	lines := []string{}
-	for _, mirror := range mirrors {
-		components, ok := unusedComponents[mirror]
-		if !ok || len(components) == 0 {
-			continue
-		}
-		i := 0
-		keys := make([]string, len(components))
-		for k := range components {
-			keys[i] = k
-			i++
-		}
-		sort.Strings(keys)
-		if keys[0] == "" {
-			// Flat repository
-			lines = append(lines, mirror)
-		} else {
-			lines = append(lines, fmt.Sprintf("%s: %s", mirror, strings.Join(keys, " ")))
-		}
-	}
-	if len(lines) > 0 {
-		return fmt.Errorf("Unused mirrors/components:\n  %s", strings.Join(lines, "\n  "))
-	}
-	return nil
-}
-
 func aptlyLockfileCreate(cmd *commander.Command, args []string) error {
 	mirrors := strings.Split(
 		context.Flags().Lookup("mirrors").Value.Get().(string), ",")
@@ -87,14 +60,12 @@ func aptlyLockfileCreate(cmd *commander.Command, args []string) error {
 	bootstrap := context.Flags().Lookup("bootstrap").Value.Get().(string)
 	include_essential := context.Flags().Lookup("include-essential").Value.Get().(bool)
 	include_required := context.Flags().Lookup("include-priority-required").Value.Get().(bool)
-	check_unused := context.Flags().Lookup("check-unused").Value.Get().(bool)
 
 	if bootstrap == "" {
 		bootstrap = mirrors[0]
 	}
 
 	allPkgs := []deb.Stanza{}
-	unusedComponents := map[string]map[string]bool{}
 	installPkgs := map[string]bool{}
 	for _, pkgname := range args {
 		installPkgs[pkgname] = true
@@ -153,14 +124,6 @@ func aptlyLockfileCreate(cmd *commander.Command, args []string) error {
 			if s["Priority"] == "required" && include_required && mirror == bootstrap {
 				installPkgs[s["Package"]] = true
 			}
-
-			if check_unused {
-				if unusedComponents[mirror] == nil {
-					unusedComponents[mirror] = map[string]bool{}
-				}
-				unusedComponents[mirror][pkg.Component] = true
-			}
-
 			allPkgs = append(allPkgs, s)
 			return nil
 		})
@@ -217,16 +180,6 @@ func aptlyLockfileCreate(cmd *commander.Command, args []string) error {
 			installedPkgs, err = solveDepsEdsp(solver, installPkgsList, allPkgs)
 			if err != nil {
 				return fmt.Errorf("Deps solving failed: %s", err)
-			}
-		}
-
-		if check_unused {
-			for _, pkg := range installedPkgs {
-				delete(unusedComponents[pkg["X-Mirror"]], pkg["X-Component"])
-			}
-			err = checkUnused(mirrors, unusedComponents)
-			if err != nil {
-				return err
 			}
 		}
 
@@ -375,7 +328,6 @@ func makeCmdLockfileCreate() *commander.Command {
 	cmd.Flag.Bool("print-edsp", false, "write EDSP format to stdout")
 	cmd.Flag.Bool("include-essential", true, "Include all packages marked 'Essential'")
 	cmd.Flag.Bool("include-priority-required", true, "Include all packages marked 'Priority: Required'")
-	cmd.Flag.Bool("check-unused", false, "Check for unused components")
 	cmd.Flag.String("bootstrap", "", "mirror from which to install required and essential packages")
 	cmd.Flag.Int64("download-limit", 0, "limit download speed (kbytes/sec)")
 	cmd.Flag.Int("max-tries", 1, "max download tries till process fails with download error")
