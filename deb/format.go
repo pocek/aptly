@@ -295,7 +295,7 @@ func NewControlFileReader(r io.Reader, isRelease, isInstaller bool) *ControlFile
 
 // ReadStanza reeads one stanza from control file
 func (c *ControlFileReader) ReadStanza() (Stanza, error) {
-	stanza := make(Stanza, 32)
+	stanza := make(Stanza)
 	lastField := ""
 	lastFieldMultiline := c.isInstaller
 
