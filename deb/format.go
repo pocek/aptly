@@ -106,8 +106,12 @@ var (
 	canonicalOrderLockFile = []string{
 		"Package",
 		"Source",
+		"Source-Version",
 		"Architecture",
 		"Version",
+		"Essential",
+		"Priority",
+		"Section",
 		"Installed-Size",
 		"Replaces",
 		"Provides",
@@ -116,14 +120,14 @@ var (
 		"Conflicts",
 		"Breaks",
 		"Filename",
-		"MD5Sum",
 		"MD5sum",
 		"SHA1",
 		"SHA256",
-		"SHA512",
 		"Multi-Arch",
 		"APT-Release",
 		"X-Archive-Root",
+		"X-Mirror",
+		"X-Component",
 	}
 )
 
